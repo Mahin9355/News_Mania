@@ -17,7 +17,8 @@ class News {
     this.saved = false,
   });
 
-  factory News.fromJson(Map<String, dynamic> json, String category) {
+  // GNews
+  factory News.fromGNews(Map<String, dynamic> json, String category) {
     return News(
       title: json['title'] ?? '',
       source: json['source']?['name'] ?? '',
@@ -25,6 +26,49 @@ class News {
       imageUrl: json['image'] ?? '',
       content: json['content'] ?? '',
       category: category,
+      saved: false,
+    );
+  }
+
+  // TheNewsAPI
+  factory News.fromTheNewsAPI(Map<String, dynamic> json, String defaultCategory) {
+    return News(
+      title: json['title'] ?? '',
+      source: json['source'] ?? '',
+      publishedAt: json['published_at'] ?? '',
+      imageUrl: json['image_url'] ?? '',
+      content: json['description'] ?? '',
+      category: (json['categories'] is List && json['categories'].isNotEmpty)
+          ? json['categories'][0]
+          : defaultCategory,
+      saved: false,
+    );
+  }
+
+  // Mediastack
+  factory News.fromMediastack(Map<String, dynamic> json, String defaultCategory) {
+    return News(
+      title: json['title'] ?? '',
+      source: json['source'] ?? '',
+      publishedAt: json['published_at'] ?? '',
+      imageUrl: json['image'] ?? '',
+      content: json['description'] ?? '',
+      category: json['category'] ?? defaultCategory,
+      saved: false,
+    );
+  }
+
+  // NewsData.io
+  factory News.fromNewsData(Map<String, dynamic> json, String defaultCategory) {
+    return News(
+      title: json['title'] ?? '',
+      source: json['source_id'] ?? '',
+      publishedAt: json['pubDate'] ?? '',
+      imageUrl: json['image_url'] ?? '',
+      content: json['description'] ?? '',
+      category: (json['categories'] is List && json['categories'].isNotEmpty)
+          ? json['categories'][0]
+          : defaultCategory,
       saved: false,
     );
   }

@@ -5,10 +5,10 @@ import '../widgets/news_alert_bottom_sheet.dart';
 import '../screens/news_detail_screen.dart';
 import '../utils/news_api_service.dart';
 import '../utils/summarizer.dart';
-import '../screens/search_screen.dart';// Import your summarizeNews function
+import '../screens/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const  HomeScreen({super.key});
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -33,25 +33,41 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   String selectedCategory = 'All';
-  String? selectedValue;
+  String selectedApi = 'GNews';
 
   @override
   void initState() {
     super.initState();
-    _fetchNews(selectedCategory);
+    _fetchNews(selectedCategory, selectedApi);
   }
 
-  void _fetchNews(String category) {
-    if (category == 'All') {
-      futureNews = apiService.fetchTopNews(null);
-    } else {
-      futureNews = apiService.fetchTopNews(category.toLowerCase());
-    }
-    setState(() {});
+  void _fetchNews(String category, String api) {
+    setState(() {
+      switch (api) {
+        case "GNews":
+          futureNews =
+              apiService.fetchTopNews(category == 'All' ? null : category.toLowerCase());
+          break;
+        case "TheNewsAPI":
+          futureNews =
+              apiService.fetchTheNewsAPI(category == 'All' ? null : category.toLowerCase());
+          break;
+        case "MediaStack":
+          futureNews =
+              apiService.fetchMediastack(category == 'All' ? null : category.toLowerCase());
+          break;
+        case "NewsData":
+          futureNews =
+              apiService.fetchNewsData(category == 'All' ? null : category.toLowerCase());
+          break;
+        default:
+          futureNews =
+              apiService.fetchTopNews(category == 'All' ? null : category.toLowerCase());
+      }
+    });
   }
 
   Future<void> _summarizeAllNews(BuildContext context) async {
-    // Show loader while summarizing
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -69,7 +85,6 @@ class _HomeScreenState extends State<HomeScreen> {
         return;
       }
 
-      // Collect all news content
       String combinedNews = newsList
           .take(5)
           .map((news) => "${news.title}\n${news.content}")
@@ -80,7 +95,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
       Navigator.pop(context); // close loader
 
-      // Show result in dialog
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
@@ -96,9 +110,8 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     } catch (e) {
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error: $e")));
     }
   }
 
@@ -112,24 +125,21 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('NEWSMANIA'),
         actions: [
           DropdownButton<String>(
-            hint: const Text("Select an API"),
-            value: selectedValue,
-            items: <String>[
-              "GNews API",
-              "NewsAPI.org",
-              "APITube",
-              "NewsData.io",
-              "newsapi.world",
-            ].map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Center(child: Text(value)),
-              );
-            }).toList(),
-            onChanged: (String? newValue) {
-              setState(() {
-                selectedValue = newValue;
-              });
+            hint: const Text("Select API"),
+            value: selectedApi,
+            items: ["GNews", "TheNewsAPI", "MediaStack", "NewsData"]
+                .map((api) => DropdownMenuItem<String>(
+              value: api,
+              child: Text(api),
+            ))
+                .toList(),
+            onChanged: (String? value) {
+              if (value != null) {
+                setState(() {
+                  selectedApi = value;
+                  _fetchNews(selectedCategory, selectedApi);
+                });
+              }
             },
             borderRadius: const BorderRadius.all(Radius.circular(10)),
           ),
@@ -141,13 +151,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 context: context,
                 builder: (_) => NewsAlertBottomSheet(allNews: newsList),
                 shape: const RoundedRectangleBorder(
-                  borderRadius:
-                  BorderRadius.vertical(top: Radius.circular(20)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 ),
               );
             },
           ),
-         // const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
@@ -157,15 +165,11 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
-          //const SizedBox(width: 16),
         ],
       ),
-
-      // Body
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Categories
           Container(
             height: 50,
             color: Colors.orange,
@@ -183,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onSelected: (_) {
                       setState(() {
                         selectedCategory = category;
-                        _fetchNews(selectedCategory);
+                        _fetchNews(selectedCategory, selectedApi);
                       });
                     },
                   ),
@@ -191,8 +195,6 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
           ),
-
-          // News List
           Expanded(
             child: FutureBuilder<List<News>>(
               future: futureNews,
@@ -205,21 +207,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   return const Center(child: Text("No news available"));
                 }
 
-                final filteredNews = snapshot.data!;
+                final newsList = snapshot.data!;
                 return ListView.builder(
                   padding: const EdgeInsets.only(
                       left: 16, right: 16, top: 16, bottom: 100),
-                  itemCount: filteredNews.length,
+                  itemCount: newsList.length,
                   itemBuilder: (context, index) {
                     return NewsCard(
-                      news: filteredNews[index],
+                      news: newsList[index],
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) =>
-                                NewsDetailScreen(news: filteredNews[index]),
-                          ),
+                              builder: (_) =>
+                                  NewsDetailScreen(news: newsList[index])),
                         );
                       },
                     );
@@ -230,8 +231,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-
-      // Summarize Button
       floatingActionButton: SizedBox(
         width: 250,
         child: Padding(
@@ -247,11 +246,8 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () => _summarizeAllNews(context),
             child: const Text(
               "Summarize",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
+              style:
+              TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
             ),
           ),
         ),

@@ -4,29 +4,73 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/news_model.dart';
 
 class ApiService {
-  final String baseUrl = "https://gnews.io/api/v4";
+  final String gnewsBase = "https://gnews.io/api/v4";
+  final String theNewsApiBase = "https://api.thenewsapi.com/v1/news/all";
+  final String mediastackBase = "http://api.mediastack.com/v1/news";
+  final String newsDataBase = "https://newsdata.io/api/1/news";
 
-  /// Fetch top news. If [category] is null, fetch all news.
+  final String gnewsApiKey = dotenv.env['GNEWS_API_KEY'] ?? '';
+  final String theNewsApiKey = dotenv.env['THE_NEWS_API_KEY'] ?? '';
+  final String mediastackApiKey = dotenv.env['MEDIA_STACK_API_KEY'] ?? '';
+  final String newsDataApiKey = dotenv.env['NEWS_DATA_API_KEY'] ?? '';
+
+  /// GNews
   Future<List<News>> fetchTopNews(String? category) async {
-    final apiKey = dotenv.env['GNEWS_API_KEY'] ?? '';
+    String url = "$gnewsBase/top-headlines?lang=en&apikey=$gnewsApiKey";
+    if (category != null && category.isNotEmpty) url += "&category=$category";
 
-    // Build URL
-    String urlString = "$baseUrl/top-headlines?lang=en&apikey=$apiKey";
-
-    if (category != null && category.isNotEmpty) {
-      urlString += "&category=$category";
+    final res = await http.get(Uri.parse(url));
+    if (res.statusCode == 200) {
+      final data = json.decode(res.body);
+      return (data['articles'] as List)
+          .map((json) => News.fromGNews(json, category ?? 'All'))
+          .toList();
     }
+    return [];
+  }
 
-    final url = Uri.parse(urlString);
+  /// TheNewsAPI
+  Future<List<News>> fetchTheNewsAPI(String? category) async {
+    String url = "$theNewsApiBase?api_token=$theNewsApiKey";
+    if (category != null && category.isNotEmpty) url += "&category=$category";
 
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final List articles = data['articles'];
-      return articles.map((json) => News.fromJson(json, category ?? 'All')).toList();
-    } else {
-      throw Exception("Failed to fetch news: ${response.statusCode}");
+    final res = await http.get(Uri.parse(url));
+    if (res.statusCode == 200) {
+      final data = json.decode(res.body);
+      return (data['data'] as List)
+          .map((json) => News.fromTheNewsAPI(json, category ?? 'All'))
+          .toList();
     }
+    return [];
+  }
+
+  /// Mediastack
+  Future<List<News>> fetchMediastack(String? category) async {
+    String url = "$mediastackBase?access_key=$mediastackApiKey&languages=en";
+    if (category != null && category.isNotEmpty) url += "&categories=$category";
+
+    final res = await http.get(Uri.parse(url));
+    if (res.statusCode == 200) {
+      final data = json.decode(res.body);
+      return (data['data'] as List)
+          .map((json) => News.fromMediastack(json, category ?? 'All'))
+          .toList();
+    }
+    return [];
+  }
+
+  /// NewsData.io
+  Future<List<News>> fetchNewsData(String? category) async {
+    String url = "$newsDataBase?apikey=$newsDataApiKey&language=en";
+    if (category != null && category.isNotEmpty) url += "&category=$category";
+
+    final res = await http.get(Uri.parse(url));
+    if (res.statusCode == 200) {
+      final data = json.decode(res.body);
+      return (data['results'] as List)
+          .map((json) => News.fromNewsData(json, category ?? 'All'))
+          .toList();
+    }
+    return [];
   }
 }

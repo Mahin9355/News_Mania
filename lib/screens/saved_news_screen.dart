@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/news_model.dart';
 import '../widgets/news_card.dart';
 import 'news_detail_screen.dart';
+import '../utils/summarizer.dart';
 import '../screens/main_screen.dart';
 
 // Dummy saved news list (Later replace with DB or Provider)
@@ -9,6 +10,59 @@ List<News> savedNews = [];
 
 class SavedNewsScreen extends StatelessWidget {
   const SavedNewsScreen({super.key});
+
+  Future<void> _summarizeAllNews(BuildContext context) async {
+    // Show loader while summarizing
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final newsList = await savedNews;
+
+      if (newsList.isEmpty) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No news available to summarize")),
+        );
+        return;
+      }
+
+      // Collect all news content
+      String combinedNews = newsList
+          .take(5)
+          .map((news) => "${news.title}\n${news.content}")
+          .join("\n\n");
+
+      String summary = await summarizeNews(
+          "Summarize the following news articles briefly into bullet points:\n\n$combinedNews");
+
+      Navigator.pop(context); // close loader
+
+      // Show result in dialog
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text("Summary of News"),
+          content: SingleChildScrollView(child: Text(summary)),
+          actions: [
+            TextButton(
+              child: const Text("Close"),
+              onPressed: () => Navigator.pop(context),
+            )
+          ],
+        ),
+      );
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -54,9 +108,7 @@ class SavedNewsScreen extends StatelessWidget {
                 ),
                 minimumSize: const Size(250, 50),
               ),
-              onPressed: () {
-                // TODO: Summarize logic
-              },
+              onPressed: () => _summarizeAllNews(context),
               child:
               const Text("Summarize",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color: Colors.black),

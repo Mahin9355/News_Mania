@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'api_key.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 Future<String> summarizeNews(String content) async {
+  final apiKey = dotenv.env['OPENAI_API_KEY'] ?? '';
   const endPoint = "https://openrouter.ai/api/v1/chat/completions";
 
   final headers = {
@@ -37,6 +39,7 @@ Future<String> summarizeNews(String content) async {
 
 /// NEW: Expand a user’s search query with AI
 Future<List<String>> expandSearchQuery(String query) async {
+  final apiKey = dotenv.env['OPENAI_API_KEY'] ?? '';
   const endPoint = "https://openrouter.ai/api/v1/chat/completions";
 
   final headers = {
