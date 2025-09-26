@@ -30,6 +30,7 @@ class ApiService {
   }
 
   /// TheNewsAPI
+  ///
   Future<List<News>> fetchTheNewsAPI(String? category) async {
     String url = "$theNewsApiBase?api_token=$theNewsApiKey";
     if (category != null && category.isNotEmpty) url += "&category=$category";
