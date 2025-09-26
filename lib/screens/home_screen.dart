@@ -32,6 +32,32 @@ class _HomeScreenState extends State<HomeScreen> {
     'Entertainment',
   ];
 
+  final List<String> mediaStackCategories= [
+    'All',
+    'General',
+    'Business',
+    'Politics',
+    'Science',
+    'Technology',
+    'Sports',
+    'Health',
+    'Entertainment',
+  ];
+
+  final List<String> newsDataCategories = [
+    'All',
+    'World',
+    'Business',
+    'Politics',
+    'Science',
+    'Technology',
+    'Sports',
+    'Health',
+    'Entertainment',
+  ];
+
+  late List<String> finalCategories;
+
   String selectedCategory = 'All';
   String selectedApi = 'GNews';
 
@@ -47,18 +73,22 @@ class _HomeScreenState extends State<HomeScreen> {
         case "GNews":
           futureNews =
               apiService.fetchTopNews(category == 'All' ? null : category.toLowerCase());
+          finalCategories= categories;
           break;
         case "TheNewsAPI":
           futureNews =
               apiService.fetchTheNewsAPI(category == 'All' ? null : category.toLowerCase());
+          finalCategories = categories;
           break;
         case "MediaStack":
           futureNews =
               apiService.fetchMediastack(category == 'All' ? null : category.toLowerCase());
+          finalCategories = mediaStackCategories;
           break;
         case "NewsData":
           futureNews =
               apiService.fetchNewsData(category == 'All' ? null : category.toLowerCase());
+          finalCategories = newsDataCategories;
           break;
         default:
           futureNews =
@@ -176,9 +206,9 @@ class _HomeScreenState extends State<HomeScreen> {
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: categories.length,
+              itemCount: finalCategories.length,
               itemBuilder: (context, index) {
-                final category = categories[index];
+                final category = finalCategories[index];
                 return Padding(
                   padding: const EdgeInsets.only(right: 12),
                   child: ChoiceChip(
