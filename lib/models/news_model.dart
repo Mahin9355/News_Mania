@@ -72,4 +72,17 @@ class News {
       saved: false,
     );
   }
+
+  // The Guardian
+  factory News.fromTheGuardian(Map<String, dynamic> json, String defaultCategory) => News(
+      title: json['webTitle'] ?? '',
+      source: json['source_id'] ?? 'The Guardian',
+      publishedAt: json['webPublicationDate'] ?? '',
+      imageUrl: json['image_url'] ?? '',
+      content: json['webTitle'] ?? '',
+      category: (json['categories'] is List && json['categories'].isNotEmpty)
+          ? json['categories'][0]
+          : defaultCategory,
+      saved: false,
+    );
 }

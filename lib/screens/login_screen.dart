@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:news_mania/screens/main_screen.dart';
+import 'package:news_mania/screens/profile_details_page.dart';
 import '../screens/register_screen.dart';
 import '../screens/home_screen.dart'; // After login, navigate to Home
 
@@ -56,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const MainScreen()),
+        MaterialPageRoute(builder: (context) => const ProfileDetailsPage(isReg: false,)),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -177,6 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Text("Not a member?"),
                 TextButton(
                   onPressed: () {
+                    Navigator.pop(context);
                     Navigator.push(
                       context,
                       MaterialPageRoute(
