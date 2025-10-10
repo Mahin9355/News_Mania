@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:news_mania/screens/profile_details_page.dart';
 import 'login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -89,6 +90,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             label: const Text("Change Password",style: TextStyle(color: Colors.black),),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
             onPressed: () => _changePassword(context),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.edit),
+            label: const Text("Edit Profile",style: TextStyle(color: Colors.black),),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileDetailsPage(isReg : true)),
+            ),
           ),
           const SizedBox(height: 30),
 

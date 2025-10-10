@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:news_mania/screens/profile_details_page.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -37,7 +38,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
         email: email,
         password: password,
       );
-      Navigator.pop(context); // Go back to login after registration
+
+      await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const ProfileDetailsPage(isReg: false,)),
+      );
+      // Navigator.pop(context); // Go back to login after registration
     } on FirebaseAuthException catch (e) {
       setState(() {
         _errorMessage = e.message;
@@ -66,8 +77,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
             SizedBox(height: 10),
             TextField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: "Password"),
+              decoration: InputDecoration(
+                labelText: "Password",
+              ),
               obscureText: true,
+
             ),
             SizedBox(height: 10),
             TextField(
@@ -83,7 +97,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ? CircularProgressIndicator()
                 : ElevatedButton(
               onPressed: _register,
-              child: Text("Register"),
+              child: Text("Next"),
             ),
             SizedBox(height: 20),
             TextButton(
