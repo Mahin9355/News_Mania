@@ -61,6 +61,9 @@ class _HomeScreenState extends State<HomeScreen> {
     'Entertainment',
   ];
 
+
+
+
   final List<String> theGuardianCategories = [
     'All',
     'World',
@@ -71,6 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   late List<String> finalCategories;
+
   String selectedCategory = 'All';
   late String selectedApi;
 
@@ -128,6 +132,8 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       switch (api) {
         case "GNews":
+
+
           futureNews = apiService.fetchTopNews(
               category == 'All' ? null : category.toLowerCase());
           finalCategories = categories;
@@ -152,6 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
           futureNews = apiService.fetchTheGuardian(
               category == 'All' ? null : category.toLowerCase());
           finalCategories = theGuardianCategories;
+
           break;
         default:
           futureNews = apiService.fetchTopNews(
@@ -262,10 +269,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.search),
-            onPressed: () {
+            onPressed: () async {
+              final newsList = await futureNews;
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const SearchScreen()),
+                MaterialPageRoute(
+                  builder: (_) => SearchScreen(allNews: newsList),
+                ),
               );
             },
           ),

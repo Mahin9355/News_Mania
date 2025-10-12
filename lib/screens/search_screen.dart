@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import '../models/news_model.dart';
 import '../widgets/news_card.dart';
-import '../utils/news_api_service.dart';
-import '../utils/summarizer.dart';
 import 'news_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+  final List<News> allNews; // <-- news list from selected API
+
+  const SearchScreen({super.key, required this.allNews});
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -14,45 +14,24 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _controller = TextEditingController();
-  final ApiService apiService = ApiService();
-
   List<News> results = [];
-  bool isLoading = false;
-  String errorMessage = "";
 
-  Future<void> _performSearch() async {
-    final query = _controller.text.trim();
-    if (query.isEmpty) return;
+  void _performSearch() {
+    final query = _controller.text.trim().toLowerCase();
+    if (query.isEmpty) {
+      setState(() {
+        results.clear();
+      });
+      return;
+    }
 
     setState(() {
-      isLoading = true;
-      results = [];
-      errorMessage = "";
+      results = widget.allNews.where((news) {
+        final title = news.title?.toLowerCase() ?? "";
+        final description = news.content?.toLowerCase() ?? "";
+        return title.contains(query) || description.contains(query);
+      }).toList();
     });
-
-    try {
-      // Expand query with AI
-      final expandedQueries = await expandSearchQuery(query);
-
-      List<News> allResults = [];
-      for (final q in expandedQueries) {
-        final results = await apiService.fetchTopNews(q);
-        allResults.addAll(results);
-      }
-// Optionally deduplicate by title
-      final fetched = allResults.toSet().toList();
-      setState(() {
-        results = fetched;
-      });
-    } catch (e) {
-      setState(() {
-        errorMessage = "Search failed: $e";
-      });
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
   }
 
   @override
@@ -90,11 +69,7 @@ class _SearchScreenState extends State<SearchScreen> {
           )
         ],
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : errorMessage.isNotEmpty
-          ? Center(child: Text(errorMessage))
-          : results.isEmpty
+      body: results.isEmpty
           ? const Center(child: Text("No results"))
           : ListView.builder(
         padding: const EdgeInsets.all(12),
