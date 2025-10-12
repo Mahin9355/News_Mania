@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/news_model.dart';
 import '../widgets/news_card.dart';
@@ -16,7 +18,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final ApiService apiService = ApiService();
+
   late Future<List<News>> futureNews;
+  List<String> apis = [];
+  bool isLoading = true;
 
   final List<String> categories = [
     'All',
@@ -32,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     'Entertainment',
   ];
 
-  final List<String> mediaStackCategories= [
+  final List<String> mediaStackCategories = [
     'All',
     'General',
     'Business',
@@ -56,43 +61,109 @@ class _HomeScreenState extends State<HomeScreen> {
     'Entertainment',
   ];
 
+
+
+
+  final List<String> theGuardianCategories = [
+    'All',
+    'World',
+    'Business',
+    'Politics',
+    'Science',
+    'Technology',
+  ];
+
   late List<String> finalCategories;
 
   String selectedCategory = 'All';
-  String selectedApi = 'GNews';
+  late String selectedApi;
+
+  // 🔹 Load user favorite APIs from Firestore
+  Future<List<String>> _loadUserData() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return [];
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('newsmania_users')
+          .doc(uid)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data()!;
+        final favApis = List<String>.from(data['fav_apis'] ?? []);
+        return favApis;
+      }
+    } catch (e) {
+      debugPrint('Error loading user data: $e');
+    }
+
+    return [];
+  }
 
   @override
   void initState() {
     super.initState();
+    _initializeHome();
+  }
+
+  Future<void> _initializeHome() async {
+    final loadedApis = await _loadUserData();
+
+    // If user has no fav_apis, use default options
+    if (loadedApis.isEmpty) {
+      apis = ["GNews", "TheNewsAPI", "MediaStack", "NewsData"];
+    } else {
+      apis = loadedApis;
+    }
+
+    selectedApi = apis.first;
+    finalCategories = categories;
+
     _fetchNews(selectedCategory, selectedApi);
+
+    setState(() {
+      isLoading = false;
+    });
   }
 
   void _fetchNews(String category, String api) {
+    // print('$category $api');
     setState(() {
       switch (api) {
         case "GNews":
-          futureNews =
-              apiService.fetchTopNews(category == 'All' ? null : category.toLowerCase());
-          finalCategories= categories;
+
+
+          futureNews = apiService.fetchTopNews(
+              category == 'All' ? null : category.toLowerCase());
+          finalCategories = categories;
           break;
         case "TheNewsAPI":
-          futureNews =
-              apiService.fetchTheNewsAPI(category == 'All' ? null : category.toLowerCase());
+          futureNews = apiService.fetchTheNewsAPI(
+              category == 'All' ? null : category.toLowerCase());
           finalCategories = categories;
           break;
         case "MediaStack":
-          futureNews =
-              apiService.fetchMediastack(category == 'All' ? null : category.toLowerCase());
+          futureNews = apiService.fetchMediastack(
+              category == 'All' ? null : category.toLowerCase());
           finalCategories = mediaStackCategories;
           break;
         case "NewsData":
-          futureNews =
-              apiService.fetchNewsData(category == 'All' ? null : category.toLowerCase());
+          futureNews = apiService.fetchNewsData(
+              category == 'All' ? null : category.toLowerCase());
           finalCategories = newsDataCategories;
           break;
+        case "The Guardian":
+          // print('fjh');
+          futureNews = apiService.fetchTheGuardian(
+              category == 'All' ? null : category.toLowerCase());
+          finalCategories = theGuardianCategories;
+
+          break;
         default:
-          futureNews =
-              apiService.fetchTopNews(category == 'All' ? null : category.toLowerCase());
+          futureNews = apiService.fetchTopNews(
+              category == 'All' ? null : category.toLowerCase());
+          finalCategories = categories;
       }
     });
   }
@@ -147,6 +218,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.orange.shade50,
       appBar: AppBar(
@@ -157,16 +234,20 @@ class _HomeScreenState extends State<HomeScreen> {
           DropdownButton<String>(
             hint: const Text("Select API"),
             value: selectedApi,
-            items: ["GNews", "TheNewsAPI", "MediaStack", "NewsData"]
-                .map((api) => DropdownMenuItem<String>(
-              value: api,
-              child: Text(api),
-            ))
+            items: apis
+                .map(
+                  (api) => DropdownMenuItem<String>(
+                value: api,
+                child: Text(api),
+              ),
+            )
                 .toList(),
             onChanged: (String? value) {
               if (value != null) {
                 setState(() {
                   selectedApi = value;
+                  print(selectedApi);
+                  print(selectedCategory);
                   _fetchNews(selectedCategory, selectedApi);
                 });
               }
@@ -243,7 +324,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 final newsList = snapshot.data!;
                 return ListView.builder(
                   padding: const EdgeInsets.only(
-                      left: 16, right: 16, top: 16, bottom: 100),
+                      left: 4, right: 4, top: 16, bottom: 100),
                   itemCount: newsList.length,
                   itemBuilder: (context, index) {
                     return NewsCard(
@@ -252,8 +333,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (_) =>
-                                  NewsDetailScreen(news: newsList[index])),
+                            builder: (_) =>
+                                NewsDetailScreen(news: newsList[index]),
+                          ),
                         );
                       },
                     );
@@ -279,8 +361,11 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () => _summarizeAllNews(context),
             child: const Text(
               "Summarize",
-              style:
-              TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
             ),
           ),
         ),
