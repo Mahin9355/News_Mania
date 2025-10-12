@@ -1,20 +1,64 @@
 import 'package:flutter/material.dart';
 import '../models/news_model.dart';
 import '../screens/saved_news_screen.dart';
+import '../services/translator_service.dart';
 
 class NewsCard extends StatefulWidget {
   final News news;
   final VoidCallback onTap;
+  final bool isBangla;
 
-  const NewsCard({super.key, required this.news, required this.onTap});
+  const NewsCard({
+    super.key,
+    required this.news,
+    required this.onTap,
+    required this.isBangla,
+  });
 
   @override
   State<NewsCard> createState() => _NewsCardState();
 }
 
 class _NewsCardState extends State<NewsCard> {
+  String? translatedTitle;
+  bool isTranslating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isBangla) {
+      _translateTitle();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant NewsCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Re-translate if isBangla toggled
+    if (oldWidget.isBangla != widget.isBangla && widget.isBangla) {
+      _translateTitle();
+    } else if (!widget.isBangla) {
+      setState(() {
+        translatedTitle = null;
+      });
+    }
+  }
+
+  Future<void> _translateTitle() async {
+    setState(() => isTranslating = true);
+    final translated =
+    await TranslatorService.translateToBangla(widget.news.title);
+    setState(() {
+      translatedTitle = translated;
+      isTranslating = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final displayTitle =
+    widget.isBangla ? (translatedTitle ?? widget.news.title) : widget.news.title;
+
     return GestureDetector(
       onTap: widget.onTap,
       child: Card(
@@ -30,8 +74,14 @@ class _NewsCardState extends State<NewsCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.news.title,
+                    isTranslating
+                        ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                        : Text(
+                      displayTitle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -46,7 +96,7 @@ class _NewsCardState extends State<NewsCard> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      ('Source: ${widget.news.source}'),
+                      'Source: ${widget.news.source}',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -55,6 +105,8 @@ class _NewsCardState extends State<NewsCard> {
                       ),
                     ),
                     const SizedBox(height: 12),
+
+                    // Save/Delete buttons
                     widget.news.saved
                         ? Row(
                       children: [
@@ -67,11 +119,9 @@ class _NewsCardState extends State<NewsCard> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          onPressed: () {
-                            // already saved, do nothing
-                          },
-                          child: Row(
-                            children: const [
+                          onPressed: () {},
+                          child: const Row(
+                            children: [
                               Icon(Icons.save,
                                   size: 14, color: Colors.white),
                               SizedBox(width: 4),
@@ -119,8 +169,8 @@ class _NewsCardState extends State<NewsCard> {
                           widget.news.saved = true;
                         });
                       },
-                      child: Row(
-                        children: const [
+                      child: const Row(
+                        children: [
                           Icon(Icons.add,
                               size: 14, color: Colors.white),
                           SizedBox(width: 4),

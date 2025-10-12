@@ -82,10 +82,11 @@ class _SearchScreenState extends State<SearchScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (_) =>
-                      NewsDetailScreen(news: results[index]),
+                      NewsDetailScreen(news: results[index], isBangla: true),
                 ),
               );
             },
+            isBangla: false
           );
         },
       ),

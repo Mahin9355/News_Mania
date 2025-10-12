@@ -22,6 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late Future<List<News>> futureNews;
   List<String> apis = [];
   bool isLoading = true;
+  bool isBangla = false;
 
   final List<String> categories = [
     'All',
@@ -60,9 +61,6 @@ class _HomeScreenState extends State<HomeScreen> {
     'Health',
     'Entertainment',
   ];
-
-
-
 
   final List<String> theGuardianCategories = [
     'All',
@@ -111,11 +109,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final loadedApis = await _loadUserData();
 
     // If user has no fav_apis, use default options
-    if (loadedApis.isEmpty) {
-      apis = ["GNews", "TheNewsAPI", "MediaStack", "NewsData"];
-    } else {
-      apis = loadedApis;
-    }
+    apis = loadedApis.isEmpty
+        ? ["GNews", "TheNewsAPI", "MediaStack", "NewsData"]
+        : loadedApis;
 
     selectedApi = apis.first;
     finalCategories = categories;
@@ -128,41 +124,36 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _fetchNews(String category, String api) {
-    // print('$category $api');
     setState(() {
       switch (api) {
         case "GNews":
-
-
-          futureNews = apiService.fetchTopNews(
-              category == 'All' ? null : category.toLowerCase());
+          futureNews =
+              apiService.fetchTopNews(category == 'All' ? null : category.toLowerCase());
           finalCategories = categories;
           break;
         case "TheNewsAPI":
-          futureNews = apiService.fetchTheNewsAPI(
-              category == 'All' ? null : category.toLowerCase());
+          futureNews =
+              apiService.fetchTheNewsAPI(category == 'All' ? null : category.toLowerCase());
           finalCategories = categories;
           break;
         case "MediaStack":
-          futureNews = apiService.fetchMediastack(
-              category == 'All' ? null : category.toLowerCase());
+          futureNews =
+              apiService.fetchMediastack(category == 'All' ? null : category.toLowerCase());
           finalCategories = mediaStackCategories;
           break;
         case "NewsData":
-          futureNews = apiService.fetchNewsData(
-              category == 'All' ? null : category.toLowerCase());
+          futureNews =
+              apiService.fetchNewsData(category == 'All' ? null : category.toLowerCase());
           finalCategories = newsDataCategories;
           break;
         case "The Guardian":
-          // print('fjh');
-          futureNews = apiService.fetchTheGuardian(
-              category == 'All' ? null : category.toLowerCase());
+          futureNews =
+              apiService.fetchTheGuardian(category == 'All' ? null : category.toLowerCase());
           finalCategories = theGuardianCategories;
-
           break;
         default:
-          futureNews = apiService.fetchTopNews(
-              category == 'All' ? null : category.toLowerCase());
+          futureNews =
+              apiService.fetchTopNews(category == 'All' ? null : category.toLowerCase());
           finalCategories = categories;
       }
     });
@@ -232,7 +223,6 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('NEWSMANIA'),
         actions: [
           DropdownButton<String>(
-            hint: const Text("Select API"),
             value: selectedApi,
             items: apis
                 .map(
@@ -246,8 +236,6 @@ class _HomeScreenState extends State<HomeScreen> {
               if (value != null) {
                 setState(() {
                   selectedApi = value;
-                  print(selectedApi);
-                  print(selectedCategory);
                   _fetchNews(selectedCategory, selectedApi);
                 });
               }
@@ -330,14 +318,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     return NewsCard(
                       news: newsList[index],
                       onTap: () {
+                        print(isBangla);
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) =>
-                                NewsDetailScreen(news: newsList[index]),
+                                NewsDetailScreen(news: newsList[index], isBangla: isBangla,),
                           ),
                         );
                       },
+                      isBangla: isBangla,
                     );
                   },
                 );
@@ -347,26 +337,51 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       floatingActionButton: SizedBox(
-        width: 250,
+        width: 350,
         child: Padding(
           padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          child: Row(
+            children: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  minimumSize: const Size(100, 50),
+                ),
+                onPressed: () => _summarizeAllNews(context),
+                child: const Text(
+                  "Summarize",
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black),
+                ),
               ),
-              minimumSize: const Size(250, 50),
-            ),
-            onPressed: () => _summarizeAllNews(context),
-            child: const Text(
-              "Summarize",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+              const SizedBox(width: 50),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  minimumSize: const Size(130, 50),
+                ),
+                onPressed: () {
+                  setState(() {
+                    isBangla = !isBangla;
+                  });
+                },
+                child: Text(
+                  isBangla ? "English" : "Bangla",
+                  style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black),
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
