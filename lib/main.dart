@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:news_mania/screens/profile_details_page.dart';
 import 'screens/main_screen.dart';
 import '../screens/home_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
