@@ -124,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               obscureText: true,
-              keyboardType: TextInputType.none,
+              keyboardType: TextInputType.visiblePassword,
             ),
             Row(
               children: [
